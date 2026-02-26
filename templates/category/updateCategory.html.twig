@@ -8,9 +8,6 @@
     <div class="container">
         <div class="form">
             <h2>Modifier une catégorie</h2>
-             {% for msg in app.flashes('success') %} {#TODO: A supp#}
-                <div class="alert alert-success my-2"> {{msg}} </div>
-            {% endfor %} 
             {{ form_start(form) }}
             {{ form_row(form.name, {'attr':{'class':'form form-control'}}) }}
             <input type="submit" value="Modifier" class="btn btn-primary mt-4">

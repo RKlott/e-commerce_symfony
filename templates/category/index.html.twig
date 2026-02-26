@@ -12,10 +12,10 @@
 
     <section class="categories_container">
         <div class="categories">
-        {% for msg in app.flashes('success') %} {#TODO: A supp#}
-                <div class="alert alert-success my-2"> {{msg}} </div>
-            {% endfor %} 
-            <table class="table">
+        
+        {% include 'layouts/_flash_message.html.twig' %}
+
+            <table class="table table-striped">
                 <tr>
                     <th>Nom de la catégorie</th>
                     <th>Action</th>
@@ -24,8 +24,8 @@
                     <tr>
                         <td> {{category.name}} </td>
                         <td>
-                            <a href="{{ path('app_category_update', {'id':category.id}) }}" class="btn btn-primary">Modifier</a>
-                            <a  href="{{ path('app_category_remove', {'id':category.id}) }}" class="btn btn-danger">Supprimer</a>
+                            <a href="{{ path('app_category_update', {'id':category.id}) }}" class="btn btn-outline-primary">Modifier</a>
+                            <a  href="{{ path('app_category_remove', {'id':category.id}) }}" onclick="return confirm(`Voulez-vous vraiment supprimer cette catégorie ?`)" class="btn btn-danger">Supprimer</a>
                         </td>
                     </tr>
                 {% else %}

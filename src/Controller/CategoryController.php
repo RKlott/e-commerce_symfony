@@ -13,7 +13,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class CategoryController extends AbstractController
 {
-    #[Route('/category', name: 'app_category')]
+    #[Route('/admin/category', name: 'app_category')]
     public function index(CategorieRepository $repo): Response
     {
 
@@ -24,7 +24,7 @@ final class CategoryController extends AbstractController
         ]);
     }
 
-    #[Route('/category/create', name: 'app_category_create')]
+    #[Route('/admin/category/create', name: 'app_category_create')]
     public function addCategory(EntityManagerInterface $entityManager, Request $request) : Response
     {
 
@@ -45,7 +45,7 @@ final class CategoryController extends AbstractController
         ]);
     }
 
-    #[Route('/category/update/{id}', name: 'app_category_update')]
+    #[Route('/admin/category/update/{id}', name: 'app_category_update')]
     public function updateCategory(Categorie $category, EntityManagerInterface $entityManager, Request $request) : Response
     { //? je mets Categorie en paramètre et pas en variable instanciée comme ça l'appli va prendre en compte que je veux travailler sur un objet qui EXISTE déjà
     //? alors que si j'instancie la classe Categorie dans une variable, l'appli va prendre en compte que je veux créer un objet vide et l'INJECTER dans la bdd (create du crud)
@@ -55,7 +55,7 @@ final class CategoryController extends AbstractController
 
         if($form->isSubmitted() && $form->isValid()){
             $entityManager->flush();
-            $this->addFlash('success', 'La catégorie à bien été modifiée.'); //? créer un tableau temporaire contenant un message d'info transmissible au front (une fois affichée, le msg est supprimé du tableau)
+            $this->addFlash('info', 'La catégorie à bien été modifiée.'); //? créer un tableau temporaire contenant un message d'info transmissible au front (une fois affichée, le msg est supprimé du tableau)
             return $this->redirectToRoute('app_category'); //? actualisation de page pour mettre en place l'affichage (obligatoire sinon le msg s'affiche pas)
                 
             
@@ -66,13 +66,14 @@ final class CategoryController extends AbstractController
         ]);
     }
 
-    #[Route('/category/remove/{id}', name: 'app_category_remove')]
+    #[Route('/admin/category/remove/{id}', name: 'app_category_remove')]
     public function deleteCategory(Categorie $category, EntityManagerInterface $entityManager)
     {
 
 
     $entityManager->remove($category);
     $entityManager->flush();
+    $this->addFlash('danger', 'La catégorie à bien été supprimée');
 
     return $this->redirectToRoute('app_category');
     }
