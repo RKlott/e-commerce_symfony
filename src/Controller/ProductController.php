@@ -22,12 +22,14 @@ final class ProductController extends AbstractController
         ]);
     }
 
-    #[Route('/new', name: 'app_product_new', methods: ['GET', 'POST'])]
+    #[Route('/new', name: 'app_product_new', methods: ['GET', 'POST'])] //? Etape de modif du controller
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $product = new Product();
         $form = $this->createForm(ProductType::class, $product);
         $form->handleRequest($request);
+
+        
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->persist($product);
