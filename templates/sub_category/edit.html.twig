@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Edit SubCategory
+{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h1>Edit SubCategory</h1>
+
+        {{ include('sub_category/_form.html.twig', {'button_label': 'Mettre à jour'}) }}
+
+        <div class="mt-2">
+            {{ include('sub_category/_delete_form.html.twig') }}
+        </div>
+
+
+        <a href="{{ path('app_sub_category_index') }}" class="btn btn-light mt-2">Retour aux sous-catégories</a>
+    </div>
+{% endblock %}

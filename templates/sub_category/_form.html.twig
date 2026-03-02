@@ -1,0 +1,11 @@
+
+{{ form_start(form) }}
+<label for="">Nom de la sous-catégorie</label>
+{{ form_widget(form.name, {attr:{'class': 'form-control'}}
+) }}
+<label for="">Catégorie</label>
+{{  form_widget(form.category, {attr:{'class': 'form-control'}}
+)  }}
+<button class="btn btn-primary mt-2">{{ button_label|default('Sauvegarder') }}</button>
+{{ form_end(form) }}
+
