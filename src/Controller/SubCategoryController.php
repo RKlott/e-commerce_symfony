@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('admin/sub-category')]
+#[Route('editor/sub-category')]
 final class SubCategoryController extends AbstractController
 {
     #[Route(name: 'app_sub_category_index', methods: ['GET'])]
@@ -22,7 +22,7 @@ final class SubCategoryController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/new/sub-category', name: 'app_sub_category_new', methods: ['GET', 'POST'])]
+    #[Route('/new', name: 'app_sub_category_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $subCategory = new SubCategory();
