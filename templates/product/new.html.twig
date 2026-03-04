@@ -6,7 +6,7 @@
 <div class="container">
     <h1>Créer un nouveau produit</h1>
 
-    {{ include('product/_form.html.twig') }}
+    {{ include('product/_form.html.twig' , {'button_label': 'Sauvegarder'}) }}
 
     <a href="{{ path('app_product_index') }}" class="btn btn-light">Retour aux produits</a>
     </div>

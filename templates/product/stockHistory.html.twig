@@ -1,0 +1,31 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Produit
+{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h1>Historique du produit : {{product.name}} </h1>
+        {% include 'layouts/_flash_message.html.twig' %}
+
+        <table class="table">
+            <tbody>
+                <tr>
+                    <th>Nom</th>
+                    <th>Quantité</th>
+                    <th>Date d'ajout</th>
+                </tr>
+
+                {% for productAdded in stockHistory %}
+                    <tr>
+                        <td> {{product.name}} </td>
+                        <td> {{productAdded.quantity}} </td>
+                        <td> {{productAdded.createAt|date('d-m-Y H:i:s', "Europe/Paris")}} </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+{% endblock %}

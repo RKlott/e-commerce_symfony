@@ -6,6 +6,8 @@ use App\Entity\AddProductHistory;
 use App\Entity\Product;
 use App\Form\AddProductHistoryType;
 use App\Form\ProductType;
+use App\Form\ProductUpdateType;
+use App\Repository\AddProductHistoryRepository;
 use App\Repository\ProductRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
@@ -39,17 +41,16 @@ final class ProductController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $image = $form->get('image')->getData();
 
-            if($image){
+            if ($image) {
                 $originalName = pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME); //qu'est-ce que getClientOriginalname
                 $safeImageName = $slugger->slug($originalName);
-                $newFileImageName = $safeImageName.'-'.uniqid().'.'.$image->guessExtension();
+                $newFileImageName = $safeImageName . '-' . uniqid() . '.' . $image->guessExtension();
 
                 try {
-                    $image->move
-                    ($this->getParameter('image_directory'), $newFileImageName);
-                } catch (FileException $exception) {}
-                    $product->setImage($newFileImageName);
-                
+                    $image->move($this->getParameter('image_directory'), $newFileImageName);
+                } catch (FileException $exception) {
+                }
+                $product->setImage($newFileImageName);
             }
 
             $entityManager->persist($product);
@@ -65,7 +66,6 @@ final class ProductController extends AbstractController
 
             $this->addFlash('success', 'Le produit à bien été crée');
             return $this->redirectToRoute('app_product_index', [], Response::HTTP_SEE_OTHER);
-
         }
 
 
@@ -84,28 +84,42 @@ final class ProductController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'app_product_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Product $product, EntityManagerInterface $entityManager): Response
+    public function edit(Request $request, SluggerInterface $slugger, Product $product, EntityManagerInterface $entityManager): Response
     {
-        $form = $this->createForm(ProductType::class, $product);
+        $form = $this->createForm(ProductUpdateType::class, $product);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
-            $this->addFlash('success', 'Le produit à bien été modifié');
+            if ($form->isSubmitted() && $form->isValid()) {
+            $image = $form->get('image')->getData();
 
+            if ($image) {
+                $originalName = pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME); //qu'est-ce que getClientOriginalname
+                $safeImageName = $slugger->slug($originalName);
+                $newFileImageName = $safeImageName . '-' . uniqid() . '.' . $image->guessExtension();
+
+                try {
+                    $image->move($this->getParameter('image_directory'), $newFileImageName);
+                } catch (FileException $exception) {
+                }
+                $product->setImage($newFileImageName);
+            }
+            $entityManager->flush();
+            $this->addFlash('success', "Le produit a bien été modifié.");
             return $this->redirectToRoute('app_product_index', [], Response::HTTP_SEE_OTHER);
-        }
+
+    }
 
         return $this->render('product/edit.html.twig', [
             'product' => $product,
             'form' => $form,
         ]);
     }
+    
 
     #[Route('/{id}', name: 'app_product_delete', methods: ['POST'])]
     public function delete(Request $request, Product $product, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$product->getId(), $request->getPayload()->getString('_token'))) {
+        if ($this->isCsrfTokenValid('delete' . $product->getId(), $request->getPayload()->getString('_token'))) {
             $entityManager->remove($product);
             $entityManager->flush();
             $this->addFlash('success', 'Le produit à bien été supprimé');
@@ -114,15 +128,52 @@ final class ProductController extends AbstractController
         return $this->redirectToRoute('app_product_index', [], Response::HTTP_SEE_OTHER);
     }
 
-    #[Route('/add/product/{id}/', name: 'app_product_stock_add', methods: ['POST'])] //? La nouvelle route
-    public function stockAdd($id, EntityManagerInterface $entityManager, Request $request) : Response
+    #[Route('/edit/product-stock/{id}/', name: 'app_product_stock_add', methods: ['POST', 'GET'])] //? La nouvelle route
+    public function stockAdd($id, EntityManagerInterface $entityManager, Request $request, ProductRepository $productRepository): Response
     {
         $stockAdd = new AddProductHistory();
         $form = $this->createForm(AddProductHistoryType::class, $stockAdd);
         $form->handleRequest($request);
 
+        $product = $productRepository->find($id);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+
+            if ($stockAdd->getQuantity() > 0) {
+                $newQuantity = $product->getStock() + $stockAdd->getQuantity();
+                $product->setStock($newQuantity);
+
+                $stockAdd->setCreateAt(new DateTimeImmutable());
+                $stockAdd->setProduct($product);
+                $entityManager->persist($stockAdd);
+                $entityManager->flush();
+
+                $this->addFlash('success', "Le stock du produit à été modifié.");
+                return $this->redirectToRoute('app_product_index');
+            } else {
+                $this->addFlash('danger', "Le stock du produit ne doit pas être inférieur à zéro");
+                return $this->redirectToRoute('app_product_stock_add', ['id'=>$product->getId()]);
+            }
+        }
+
         return $this->render('product/addStock.html.twig', [
-            'form' => $form->createView()
-            ]);
+            'form' => $form->createView(),
+            'product' => $product,
+        ]);
     }
+
+    #[Route('/stockHistory/{id}', name: 'app_product_stock_history', methods: ['POST', 'GET'])]
+    public function showProductStockHistory($id, ProductRepository $productRepository, Request $request, EntityManagerInterface $entityManager, AddProductHistoryRepository $addProductHistoryRepository) : Response {
+        
+    $product = $productRepository->find($id);
+    $productAddHistory = $addProductHistoryRepository->findBy(['product' => $product], ['id' => 'DESC']);
+
+
+
+    return $this->render('product/stockHistory.html.twig', [
+        'product' => $product,
+        'stockHistory' => $productAddHistory
+    ]);
+    }
+    
 }

@@ -1,12 +1,13 @@
 {% extends 'base.html.twig' %}
 
 {% block title %}
-    Product
+    Produit
 {% endblock %}
 
 {% block body %}
     <div class="container">
         <h1>Produit</h1>
+        {% include 'layouts/_flash_message.html.twig' %}
 
         <table class="table">
             <tbody>
@@ -38,6 +39,8 @@
         </table>
 
         <a href="{{ path('app_product_index') }}" class="btn btn-light">Retour aux produits</a>
+
+        <a href="{{ path('app_product_stock_history', {'id': product.id}) }}" class="btn btn-success">Afficher l'historique</a>
 
         <a href="{{ path('app_product_edit', {'id': product.id}) }}" class="btn btn-primary ">Modifier</a>
 
