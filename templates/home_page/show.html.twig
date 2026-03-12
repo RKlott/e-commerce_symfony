@@ -1,0 +1,53 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Affichage produit
+{% endblock %}
+
+{% block body %}
+    <div class="container d-flex justify-content-center align-items-center" style="margin-top: 7rem;">
+        <div class="card mb-3" style="max-width: 100%; width: 90%;">
+            <div class="row g-0">
+                <div class="col-md-4">
+                    <img src=" {{ asset('uploads/images/'~product.image)}} " class="imgproduct card-img-top h-100"></img>
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h5 class="card-title" style="font-size: 4rem;"> {{product.name}} </h5>
+                        <p class="card-text" style="font-size: 2rem;">{{product.description}}</p>
+                        <span style="font-size: 1rem;">{{product.price}}€</span> <br>
+                        <span style="font-size: 1rem;"> {{product.stock}} Restants </span> <br>
+
+                        <a href="#" class="btn btn-outline-success">Ajouter au panier</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mb-5 mt-4">
+        <h2>Dernier produits ajoutés</h2>
+        <div class="d-flex flex-wrap gap-2">
+            {% for product in latestProducts %}
+                <div class="">
+                    <div class="card" style="width: 250px;">
+                        <div class="card-header">
+                            {% for subCategory in product.subCategory %}
+                                {{subCategory.name}}
+                            {% endfor %}
+                        </div>
+                        <img src=" {{ asset('uploads/images/'~product.image)}} " class="imgproduct card-img-top h-100" style="max-height: 200px;"></img>
+                        <div class="card-body">
+                            <a href="{{path('app_home_product_show', {'id': product.id}) }}"><h5 class="card-title titleProduct"> {{product.name}} </h5></a>
+                            <p class="card-text"> {{product.description|slice(0,20)}}... <br>
+                            <span>{{product.price}}€</span>
+                        </p>
+
+                        <a href="#" class="btn btn-outline-success">Ajouter au panier</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    </div>
+{% endblock %}
