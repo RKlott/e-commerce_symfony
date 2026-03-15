@@ -14,18 +14,20 @@
                         {{subCategory.name}}
                     {% endfor %}
                 </div>
-                    <img src=" {{ asset('uploads/images/'~product.image)}} " class="imgproduct card-img-top h-100"></img>
+                    <img src=" {{ asset('uploads/images/'~product.image)}} " class="imgproduct card-img-top h-100">
                     <div class="card-body">
                         <a href="{{path('app_home_product_show', {'id': product.id}) }}"><h5 class="card-title titleProduct"> {{product.name}} </h5></a>
                         <p class="card-text"> {{product.description|slice(0,60)}}... <br> 
                          <span>{{product.price}}€</span>
                         </p>
                  
-                        <a href="#" class="btn btn-outline-success">Ajouter au panier</a>
+                        <a href="{{path('app_cart_new', {'id':product.id}) }}" class="btn btn-outline-success">Ajouter au panier</a>
                     </div>
                 </div>
             </div>
         {% endfor %}
+        <span class="mt-5">{{ knp_pagination_render(products, 'layouts/_pagination_template.html.twig') }}</span>
+        
     </div>
 
 
