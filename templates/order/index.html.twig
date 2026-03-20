@@ -1,0 +1,122 @@
+{% extends 'base.html.twig' %}
+
+
+{% block title %}
+    Order index
+{% endblock %}
+
+{% block body %}
+
+    <div class="container">
+        <div class="row">
+            <div class="col-8">
+                <h1 class="mt-4 mb-4">Commandes</h1>
+                {{ form_start(form) }}
+                <input type="submit" value="Continuer" class="btn btn-primary">
+                {{ form_end(form) }}
+            </div>
+            <div class="col-4">
+
+            </div>
+
+            <div class="col-4 mt-5">
+                <span class="mb-2">Montant à payer: </span>
+                <h3>
+                    <span id="card-price">{{total}} €</span>
+                </h3>
+                <span>Frais de livraison:</span>
+                <h3 >
+                    <span id="shippingCost"></span> €
+                </h3>
+                <span>Montant total à payer:</span>
+                <h3>
+                    <span class="total-price"></span> €
+                </h3>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-4.0.0.min.js" integrity="sha256-OaVG6prZf4v69dPg6PhVattBXkcOWQB62pdZ3ORyrao=" crossorigin="anonymous"></script>
+    <script>
+        $(document).ready(function(){
+            const citySelector = $('#order_city');
+            const cityValue = citySelector.val();
+
+            const url = `http://127.0.0.1:8000/order/city/${cityValue}/shipping/cost`;
+
+
+            function ajaxRequest(url){
+                $.ajax({
+                    url:url,
+                    type:'GET',
+                    success:function(response){
+                        const newResponse = JSON.parse(response)
+                        if(parseInt(newResponse.status) === 200){
+                            console.log(newResponse.status)
+                            $("#shippingCost").text(newResponse.content)
+
+                            const cardPrice = parseFloat($('#card-price').text());
+                            const shippingCost = parseFloat($('#shippingCost').text());
+                            const calculatedPrice = cardPrice + shippingCost;
+                            $('.total-price').text(+calculatedPrice);
+                            console.log(cardPrice)
+                        }
+                    },
+                    error:function(xhr,status,error){
+
+                    }
+                })
+                
+            }
+            ajaxRequest(url);
+
+            citySelector.on('change', function(){
+                    const urlUpdate = `http://127.0.0.1:8000/order/city/${$(this).val()}/shipping/cost`;
+                    ajaxRequest(urlUpdate);
+                })
+
+        })
+    </script>
+{% endblock %}
+
+
+
+
+
+
+{# <table class="table">
+<thead>
+<tr>
+<th>Id</th>
+<th>FirstName</th>
+<th>LastName</th>
+<th>Phone</th>
+<th>Adress</th>
+<th>CreatedAt</th>
+<th>actions</th>
+</tr>
+</thead>
+<tbody>
+{% for order in orders %}
+<tr>
+<td>{{ order.id }}</td>
+<td>{{ order.firstName }}</td>
+<td>{{ order.lastName }}</td>
+<td>{{ order.phone }}</td>
+<td>{{ order.adress }}</td>
+<td>{{ order.createdAt ? order.createdAt|date('Y-m-d H:i:s') : '' }}</td>
+<td>
+<a href="{{ path('app_order_show', {'id': order.id}) }}">show</a>
+<a href="{{ path('app_order_edit', {'id': order.id}) }}">edit</a>
+</td>
+</tr>
+{% else %}
+<tr>
+<td colspan="7">no records found</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<a href="{{ path('app_order_new') }}" class="btn btn-primary">Créer une nouvelle commande</a>
+</div> #}
+

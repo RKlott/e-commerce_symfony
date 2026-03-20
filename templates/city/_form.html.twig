@@ -1,0 +1,8 @@
+{{ form_start(form) }}
+<label>Nom du produit</label>
+{{ form_widget(form.name, {attr:{'class': 'form-control'}}) }}
+<label>Coût de livraison</label>
+{{ form_widget(form.shippingCost, {attr:{'class': 'form-control'}}) }}
+
+    <button class="btn btn-outline-primary mb-2 mt-4">{{ button_label|default('Sauvegarder') }}</button>
+{{ form_end(form) }}

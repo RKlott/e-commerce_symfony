@@ -19,9 +19,9 @@
         {% for item in items %}
             <tr>
                 <td> {{ item.product.name }} </td>
-                <td> {{ item.product.price }} </td>
+                <td> {{ item.product.price }} €</td>
                 <td> {{ item.quantity }} </td>
-                <td> {{ item.product.price * item.quantity }} </td>
+                <td> {{ item.product.price * item.quantity }} €</td>
                 <td>
                     <a href="{{path('app_cart_product-remove', {'id': item.product.id}) }}" class="text-danger text-decoration-none">Supprimer du panier</a>
                 </td>
@@ -30,6 +30,10 @@
             <p>Votre panier est vide.</p>
         {% endfor %}
     </table>
+
+    <div>
+        <span>Prix H.T.C: {{total}} €</span>
+    </div>
 
     <div class="row gap-1">
         <a href="" class="btn btn-primary">Valider la commande</a>
