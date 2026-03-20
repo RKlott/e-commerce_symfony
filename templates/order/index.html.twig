@@ -57,7 +57,7 @@
                             const cardPrice = parseFloat($('#card-price').text());
                             const shippingCost = parseFloat($('#shippingCost').text());
                             const calculatedPrice = cardPrice + shippingCost;
-                            $('.total-price').text(+calculatedPrice);
+                            $('.total-price').text(calculatedPrice);
                             console.log(cardPrice)
                         }
                     },
@@ -65,14 +65,14 @@
 
                     }
                 })
-                
+
             }
             ajaxRequest(url);
 
             citySelector.on('change', function(){
-                    const urlUpdate = `http://127.0.0.1:8000/order/city/${$(this).val()}/shipping/cost`;
-                    ajaxRequest(urlUpdate);
-                })
+                const urlUpdate = `http://127.0.0.1:8000/order/city/${$(this).val()}/shipping/cost`;
+                ajaxRequest(urlUpdate);
+            })
 
         })
     </script>
