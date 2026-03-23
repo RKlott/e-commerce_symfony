@@ -7,6 +7,7 @@
 
 <div class="container">
     <h1>Panier</h1>
+    {% include 'layouts/_flash_message.html.twig' %}
     <table class="table table-bordered">
         <tr>
             <th>Produit</th>
@@ -23,6 +24,7 @@
                 <td> {{ item.quantity }} </td>
                 <td> {{ item.product.price * item.quantity }} €</td>
                 <td>
+              
                     <a href="{{path('app_cart_product-remove', {'id': item.product.id}) }}" class="text-danger text-decoration-none">Supprimer du panier</a>
                 </td>
             </tr>
@@ -36,7 +38,7 @@
     </div>
 
     <div class="row gap-1">
-        <a href="" class="btn btn-primary">Valider la commande</a>
+        <a data-turbo='false' href="{{path('app_order_index')}}" class="btn btn-primary">Valider la commande</a>
         <a href="{{path('app_cart_remove')}}" class="btn btn-outline-danger">Supprimer le panier</a>
     </div>
 </div>

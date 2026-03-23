@@ -1,0 +1,51 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <div class="container">
+        <div class="orders">
+            <h1>Liste des commandes</h1>
+
+            <table class="table table-striped">
+                <tr>
+                    <th>ID</th>
+                    <th>Nom client</th>
+                    <th>Prénom client</th>
+                    <th>Téléphone</th>
+                    <th>Adresse</th>
+                    <th>Ville</th>
+                    <th>Effectué le</th>
+                    <th>Paiement à la livraison</th>
+
+                    <th>Liste des produits</th>
+                    <th>Prix total</th>
+
+                </tr>
+
+                {% for order in orders %}
+                    <tr>
+                        <td> {{order.id}} </td>
+                        <td> {{order.firstName}} </td>
+                        <td> {{order.lastName}} </td>
+                        <td> {{order.phone}} </td>
+                        <td> {{order.adress}} </td>
+                        <td> {{order.city.name}} </td>
+                        <td> {{order.createdAt|date('d/m/Y H:i')}} </td>
+                        <td> {{order.payOnDelivery ? 'Oui' : 'Non'}} </td>
+                        <td>
+                            {% for product in order.orderProducts %}
+                                <li>
+                                    {{product.product.name}}
+                                    x{{product.quantity}}
+                                </li>
+
+                            {% endfor %}
+                        </td>
+                        <td> {{order.totalPrice}}€</td>
+                    </tr>
+                {% endfor %}
+            </table>
+
+
+        </div>
+    </div>
+{% endblock %}

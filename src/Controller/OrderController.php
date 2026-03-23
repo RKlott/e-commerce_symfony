@@ -4,8 +4,10 @@ namespace App\Controller;
 
 use App\Entity\City;
 use App\Entity\Order;
+use App\Entity\OrderProducts;
 use App\Form\OrderType;
 use App\Repository\OrderRepository;
+use App\Service\Cart;
 use App\Repository\ProductRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,32 +19,67 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/order')]
 final class OrderController extends AbstractController
 {
-    #[Route(name: 'app_order_index', methods: ['GET'])]
-    public function index(Request $request, SessionInterface $session, ProductRepository $productRepository): Response
+    #[Route(name: 'app_order_index', methods: ['GET', 'POST'])]
+    public function index(Request $request, SessionInterface $session, ProductRepository $productRepository, EntityManagerInterface $entityManager, Cart $cart): Response
     {
 
-    $cart = $session->get('cart', []);
-
-        $cartWithData = [];
-
-        foreach ($cart as $id => $quantity) {
-            $cartWithData[] = [
-                'product' => $productRepository->find($id),
-                'quantity' => $quantity
-            ];
-        }
-
-        $total = array_sum(array_map(function ($item) {
-            return $item['product']->getPrice() * $item['quantity'];
-        }, $cartWithData));
+        $data = $cart->getcart($session);
 
         $order = new Order();
+
         $form = $this->createForm(OrderType::class, $order);
         $form->handleRequest($request);
 
+        if ($form->isSubmitted() && $form->isValid()) {
+            if ($order->isPayOnDelivery()) {
+
+
+                if (!empty($data['total'])) {
+                    $order->setTotalPrice($data['total']);
+                    $order->setCreatedAt(new \DateTimeImmutable());
+                    $entityManager->persist($order);
+                    $entityManager->flush();
+
+                    foreach ($data['cart'] as $value) {
+                        $orderProduct = new OrderProducts();
+                        $orderProduct->setOrder($order);
+                        $orderProduct->setProduct($value['product']);
+                        $orderProduct->setQuantity($value['quantity']);
+                        $entityManager->persist($orderProduct);
+                        $entityManager->flush();
+                    }
+                }
+
+
+
+
+                $this->addFlash('success', 'La commande à bien été soumise.');
+                $session->set('cart', []);
+                return $this->redirectToRoute('app_order_message', [], Response::HTTP_SEE_OTHER);
+            }
+        }
+
         return $this->render('order/index.html.twig', [
             'form' => $form->createView(),
-            'total' => $total
+            'order' => $order,
+            'total' => $data['total']
+        ]);
+    }
+
+    #[Route('/order-message', name: 'app_order_message')]
+    public function orderMessage(): Response
+    {
+
+        return $this->render('order/order_message.html.twig');
+    }
+
+    #[Route('/editor/order', name: 'app_orders_show')]
+    public function getAllOrder(OrderRepository $repo) : Response
+    {
+        $orders = $repo->findAll();
+
+        return $this->render('order/orders.html.twig', [
+            'orders' => $orders
         ]);
     }
 
@@ -51,30 +88,12 @@ final class OrderController extends AbstractController
     {
         $cityShippingPrice = $city->getShippingCost();
 
-        return new Response(json_encode(['status'=>200, "message"=>'on', 'content'=> $cityShippingPrice]));
+        return new Response(json_encode(['status' => 200, "message" => 'on', 'content' => $cityShippingPrice]));
     }
 
+    
 }
-
-    // #[Route('/new', name: 'app_order_new', methods: ['GET', 'POST'])]
-    // public function new(Request $request, EntityManagerInterface $entityManager): Response
-    // {
-    //     $order = new Order();
-    //     $form = $this->createForm(OrderType::class, $order);
-    //     $form->handleRequest($request);
-
-    //     if ($form->isSubmitted() && $form->isValid()) {
-    //         $entityManager->persist($order);
-    //         $entityManager->flush();
-
-    //         return $this->redirectToRoute('app_order_index', [], Response::HTTP_SEE_OTHER);
-    //     }
-
-    //     return $this->render('order/new.html.twig', [
-    //         'order' => $order,
-    //         'form' => $form,
-    //     ]);
-    // }
+    
 
 //     #[Route('/{id}', name: 'app_order_show', methods: ['GET'])]
 //     public function show(Order $order): Response

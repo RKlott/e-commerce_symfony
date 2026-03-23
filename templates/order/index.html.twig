@@ -11,7 +11,9 @@
         <div class="row">
             <div class="col-8">
                 <h1 class="mt-4 mb-4">Commandes</h1>
+                {% include 'layouts/_flash_message.html.twig' %}
                 {{ form_start(form) }}
+                {{ form_widget(form) }}
                 <input type="submit" value="Continuer" class="btn btn-primary">
                 {{ form_end(form) }}
             </div>
@@ -56,7 +58,7 @@
 
                             const cardPrice = parseFloat($('#card-price').text());
                             const shippingCost = parseFloat($('#shippingCost').text());
-                            const calculatedPrice = cardPrice + shippingCost;
+                            const calculatedPrice = parseFloat(cardPrice + shippingCost);
                             $('.total-price').text(calculatedPrice);
                             console.log(cardPrice)
                         }
@@ -77,46 +79,3 @@
         })
     </script>
 {% endblock %}
-
-
-
-
-
-
-{# <table class="table">
-<thead>
-<tr>
-<th>Id</th>
-<th>FirstName</th>
-<th>LastName</th>
-<th>Phone</th>
-<th>Adress</th>
-<th>CreatedAt</th>
-<th>actions</th>
-</tr>
-</thead>
-<tbody>
-{% for order in orders %}
-<tr>
-<td>{{ order.id }}</td>
-<td>{{ order.firstName }}</td>
-<td>{{ order.lastName }}</td>
-<td>{{ order.phone }}</td>
-<td>{{ order.adress }}</td>
-<td>{{ order.createdAt ? order.createdAt|date('Y-m-d H:i:s') : '' }}</td>
-<td>
-<a href="{{ path('app_order_show', {'id': order.id}) }}">show</a>
-<a href="{{ path('app_order_edit', {'id': order.id}) }}">edit</a>
-</td>
-</tr>
-{% else %}
-<tr>
-<td colspan="7">no records found</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-
-<a href="{{ path('app_order_new') }}" class="btn btn-primary">Créer une nouvelle commande</a>
-</div> #}
-
