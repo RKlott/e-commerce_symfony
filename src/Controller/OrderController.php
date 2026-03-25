@@ -7,9 +7,10 @@ use App\Entity\Order;
 use App\Entity\OrderProducts;
 use App\Form\OrderType;
 use App\Repository\OrderRepository;
-use App\Service\Cart;
 use App\Repository\ProductRepository;
+use App\Service\Cart;
 use Doctrine\ORM\EntityManagerInterface;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -74,13 +75,48 @@ final class OrderController extends AbstractController
     }
 
     #[Route('/editor/order', name: 'app_orders_show')]
-    public function getAllOrder(OrderRepository $repo) : Response
+    public function getAllOrder(OrderRepository $repo, Request $request, PaginatorInterface $paginator) : Response
     {
-        $orders = $repo->findAll();
+        $data = $repo->findBy([], ['id'=>'DESC']);
+
+    // if($type == 'is-completed'){
+    //         $data = $repo->findBy(['isCompleted'=>1],['id'=>'DESC']);
+    //     }else if($type == 'pay-on-stripe-not-delivered'){
+    //         $data = $repo->findBy(['isCompleted'=>null,'payOnDelivery'=>0,'isPaymentCompleted'=>1],['id'=>'DESC']);
+    //     }else if($type == 'pay-on-stripe-is-delivered'){
+    //         $data = $repo->findBy(['isCompleted'=>1,'payOnDelivery'=>0,'isPaymentCompleted'=>1],['id'=>'DESC']);
+    //     }else if($type == 'no_delivery'){
+    //         $data = $repo->findBy(['isCompleted'=>null,'payOnDelivery'=>0,'isPaymentCompleted'=>0],['id'=>'DESC']);
+    //     }
+
+        $orders = $paginator->paginate(
+            $data,
+            $request->query->getInt('page', 1),//met en place la pagination
+            6 //limite de 6 commandes par pages
+        );
 
         return $this->render('order/orders.html.twig', [
             'orders' => $orders
         ]);
+    }
+
+     #[Route('/editor/order/{id}/is-completed/update', name: 'app_orders_is-completed-update')]
+    public function isCompletedUpdate(Request $request, $id, OrderRepository $orderRepository, EntityManagerInterface $entityManager):Response
+    {
+        $order = $orderRepository->find($id);
+        $order->setIsCompleted(true);
+        $entityManager->flush();
+        $this->addFlash('success', 'Modification effectuée');
+        return $this->redirect($request->headers->get('referer'));//cela fait reference a la route precedent cette route ci
+    }
+
+    #[Route('/editor/order/{id}/remove', name: 'app_orders_remove')]
+    public function removeOrder(Order $order, EntityManagerInterface $entityManager):Response 
+    {
+        $entityManager->remove($order);
+        $entityManager->flush();
+        $this->addFlash('danger', 'Commande supprimée');
+        return $this->redirectToRoute('app_orders_show');
     }
 
     #[Route('/city/{id}/shipping/cost', name: 'app_city_shipping_cost', methods: ['GET'])]
