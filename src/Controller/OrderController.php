@@ -9,17 +9,26 @@ use App\Form\OrderType;
 use App\Repository\OrderRepository;
 use App\Repository\ProductRepository;
 use App\Service\Cart;
+use App\Service\StripePayment;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/order')]
 final class OrderController extends AbstractController
 {
+    public function __construct(private MailerInterface $mailer) {
+       
+    }
+
+
     #[Route(name: 'app_order_index', methods: ['GET', 'POST'])]
     public function index(Request $request, SessionInterface $session, ProductRepository $productRepository, EntityManagerInterface $entityManager, Cart $cart): Response
     {
@@ -56,8 +65,27 @@ final class OrderController extends AbstractController
 
                 $this->addFlash('success', 'La commande à bien été soumise.');
                 $session->set('cart', []);
+
+                $html = $this->renderView('mail/orderConfirm.html.twig', [
+                    'order' => $order 
+                ]);
+
+                $email = (new Email())
+                ->from('symfspace@gmail.com')
+                ->to($order->getEmail())
+                ->subject('Confirmation de la commande')
+                ->html($html);
+                $this->mailer->send($email);
+
                 return $this->redirectToRoute('app_order_message', [], Response::HTTP_SEE_OTHER);
             }
+
+            $paymentStripe = new StripePayment();
+            $shippingCost = $order->getCity()->getShippingCost();
+            $paymentStripe->startPayment($data, $shippingCost);
+            $stripeRedirectUrl = $paymentStripe->getStripeRedirectUrl();
+
+            return $this->redirect($stripeRedirectUrl);
         }
 
         return $this->render('order/index.html.twig', [
@@ -70,7 +98,6 @@ final class OrderController extends AbstractController
     #[Route('/order-message', name: 'app_order_message')]
     public function orderMessage(): Response
     {
-
         return $this->render('order/order_message.html.twig');
     }
 

@@ -1,0 +1,32 @@
+{% block body %}
+
+    <div class="container">
+    <!--Possible de mettre le logo de l'entreprise ici en html-->
+        <h1>Confirmation de la commande</h1>
+        <p>Merci pour votre commande ! elle sera traitée dans les plus brefs délais.</p>
+        <span class='text-primary mt-5'>Détails de la commande</span>
+        <br><br><br>
+        <span>Frais de livraisons : {{ order.city.shippingCost }} €</span>
+        <hr>
+        <h5 class='mb-5'>Total à payer : {{ order.totalPrice + order.city.shippingCost }} €</h5>
+    </div>
+
+{% endblock %}
+
+<style>
+    table{
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td{
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    thead{
+        background: #f2f2f2;
+    }
+    tbody tr:nth-child(odd){
+        background: #f9f9f9
+    }
+</style>
