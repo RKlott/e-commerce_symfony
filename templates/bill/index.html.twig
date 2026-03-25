@@ -50,7 +50,7 @@
         <br><br><br>
         <span>Frais de livraisons : {{ order.city.shippingCost }} €</span>
         <hr>
-        <h5 class='mb-5'>Total à payer : {{ order.totalPrice }} €</h5>
+        <h5 class='mb-5'>Total à payer : {{ order.totalPrice + order.city.shippingCost }} €</h5>
     </div>
 
 {% endblock %}
