@@ -6,24 +6,27 @@ use Stripe\Stripe;
 use Stripe\Checkout\Session;
 
 
-class StripePayment {
+class StripePayment
+{
 
     private $redirectUrl;
 
-    public function __construct() {
+    public function __construct()
+    {
         Stripe::setApiKey($_SERVER['STRIPE_SECRET_KEY']);
         Stripe::setApiVersion('2026-02-25.clover');
     }
 
-    public function startPayment($cart, $shippingCost){
+    public function startPayment($cart, $shippingCost, $orderId)
+    {
 
         $cartProducts = $cart['cart'];
         $products = [
-        [
-            'quantity' => 1,
-            'price' => $shippingCost,
-            'name' => 'Frais de livraison'
-        ]
+            [
+                'quantity' => 1,
+                'price' => $shippingCost,
+                'name' => 'Frais de livraison'
+            ]
         ];
 
         foreach ($cartProducts as $value) {
@@ -32,11 +35,10 @@ class StripePayment {
             $productItem['price'] = $value['product']->getPrice();
             $productItem['quantity'] = $value['quantity'];
             $products[] = $productItem;
-
         }
 
         $session = Session::create([
-            'line_items'=>[
+            'line_items' => [
                 array_map(fn(array $product) => [
                     'quantity' => $product['quantity'],
                     'price_data' => [
@@ -44,7 +46,7 @@ class StripePayment {
                         'product_data' => [
                             'name' => $product['name']
                         ],
-                        'unit_amount' => $product['price']*100,
+                        'unit_amount' => $product['price'] * 100,
                     ],
                 ], $products)
             ],
@@ -55,15 +57,19 @@ class StripePayment {
             'shipping_address_collection' => [
                 'allowed_countries' => ['FR', 'EG'],
             ],
-            'metadata' => [
-
+            'payment_intent_data' => [
+                'metadata' => [
+                    'orderId' => $orderId
+                ]
             ]
+
         ]);
 
         $this->redirectUrl = $session->url;
     }
 
-    public function getStripeRedirectUrl(){
+    public function getStripeRedirectUrl()
+    {
         return $this->redirectUrl;
     }
 }

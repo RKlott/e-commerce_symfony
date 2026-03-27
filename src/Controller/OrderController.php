@@ -24,75 +24,88 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/order')]
 final class OrderController extends AbstractController
 {
-    public function __construct(private MailerInterface $mailer) {
-       
-    }
+    public function __construct(private MailerInterface $mailer) {}
 
 
     #[Route(name: 'app_order_index', methods: ['GET', 'POST'])]
-    public function index(Request $request, SessionInterface $session, ProductRepository $productRepository, EntityManagerInterface $entityManager, Cart $cart): Response
+    public function index(Request $request, SessionInterface $session, 
+                          ProductRepository $productRepository, 
+                          EntityManagerInterface $entityManager,
+                          Cart $cart,
+    ): Response
     {
 
-        $data = $cart->getcart($session);
-
+        // Récupère les données du panier à partir de la session using le service Cart
+        $data = $cart->getCart($session);
+        // Crée un nouvel objet Order
         $order = new Order();
-
+        // Crée un formulaire pour gérer la création de la commande using le type de formulaire OrderType
         $form = $this->createForm(OrderType::class, $order);
+        // Gère la soumission du formulaire
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            if ($order->isPayOnDelivery()) {
-
-
-                if (!empty($data['total'])) {
-                    $order->setTotalPrice($data['total']);
+        //quand c'est true
+        if ($form->isSubmitted() && $form->isValid()) {  
+                // Vérifie si le total du panier n'est pas vide
+                if(!empty($data['total'])) {
+                    $totalPrice = $data['total'] + $order->getCity()->getShippingCost();
+                    // Définit le prix total de la commande
+                    $order->setTotalPrice($totalPrice);
+                    // Définit la date de création de la commande
                     $order->setCreatedAt(new \DateTimeImmutable());
+                    $order->setIsPaymentCompleted(0); //on initialise a false 
+                    //dd($order);
                     $entityManager->persist($order);
                     $entityManager->flush();
-
-                    foreach ($data['cart'] as $value) {
+                    // Boucle sur chaque élément du panier
+                    foreach($data['cart'] as $value) {
+                        // Crée un nouvel objet OrderProducts
                         $orderProduct = new OrderProducts();
+                        // Définit la commande pour le produit de la commande
                         $orderProduct->setOrder($order);
+                        // Définit le produit pour le produit de la commande
                         $orderProduct->setProduct($value['product']);
+                        // Définit la quantité pour le produit de la commande
                         $orderProduct->setQuantity($value['quantity']);
+                        // Enregistre le produit de la commande dans la base de données
                         $entityManager->persist($orderProduct);
                         $entityManager->flush();
                     }
+
+                    if($order->isPayOnDelivery()) {
+                        // Mise à jour du contenu du panier en session
+                        $session->set('cart', []);
+
+                        $html = $this->renderView('mail/orderConfirm.html.twig',[ //crée une vue mail
+                            'order'=>$order //on recupere le $order apres le flush donc on a toutes les infos
+                            
+                        ]);
+                        $email = (new Email()) //On importe la classe depuis Symfony\Component\Mime\Email;
+                        ->from('sneakhub@gmailcom') //Adresse de l'expéditeur donc notre boutique ou vous mêmes
+                        //->to('to@gmailcom') //Adresse du receveur
+                        ->to($order->getEmail())
+                        ->subject('Confirmation de réception de commande') //Intitulé du mail
+                        ->html($html);
+                        $this->mailer->send($email);
+        
+                        // Redirection vers la page du panier
+                        return $this->redirectToRoute('app_order_message');
+                    }
+                    // quand c'est false
+                    $paymentStripe = new StripePayment(); //on importe notre service avec sa classe
+                    $shippingCost = $order->getCity()->getShippingCost();
+                    $paymentStripe->startPayment($data, $shippingCost, $order->getId()); //on importe le panier donc $data
+                    $stripeRedirectUrl = $paymentStripe->getStripeRedirectUrl();
+                    //dd( $stripeRedirectUrl);
+                    return $this->redirect($stripeRedirectUrl);
                 }
-
-
-
-
-                $this->addFlash('success', 'La commande à bien été soumise.');
-                $session->set('cart', []);
-
-                $html = $this->renderView('mail/orderConfirm.html.twig', [
-                    'order' => $order 
-                ]);
-
-                $email = (new Email())
-                ->from('symfspace@gmail.com')
-                ->to($order->getEmail())
-                ->subject('Confirmation de la commande')
-                ->html($html);
-                $this->mailer->send($email);
-
-                return $this->redirectToRoute('app_order_message', [], Response::HTTP_SEE_OTHER);
-            }
-
-            $paymentStripe = new StripePayment();
-            $shippingCost = $order->getCity()->getShippingCost();
-            $paymentStripe->startPayment($data, $shippingCost);
-            $stripeRedirectUrl = $paymentStripe->getStripeRedirectUrl();
-
-            return $this->redirect($stripeRedirectUrl);
         }
+            
+            return $this->render('order/index.html.twig', [
+                'form'=>$form->createView(),
+                'total'=>$data['total'],
+            ]);
 
-        return $this->render('order/index.html.twig', [
-            'form' => $form->createView(),
-            'order' => $order,
-            'total' => $data['total']
-        ]);
     }
 
     #[Route('/order-message', name: 'app_order_message')]
@@ -101,24 +114,24 @@ final class OrderController extends AbstractController
         return $this->render('order/order_message.html.twig');
     }
 
-    #[Route('/editor/order', name: 'app_orders_show')]
-    public function getAllOrder(OrderRepository $repo, Request $request, PaginatorInterface $paginator) : Response
+    #[Route('/editor/order/{type}/', name: 'app_orders_show')]
+    public function getAllOrder($type, OrderRepository $repo, Request $request, PaginatorInterface $paginator): Response
     {
-        $data = $repo->findBy([], ['id'=>'DESC']);
+        $data = $repo->findBy([], ['id' => 'DESC']);
 
-    // if($type == 'is-completed'){
-    //         $data = $repo->findBy(['isCompleted'=>1],['id'=>'DESC']);
-    //     }else if($type == 'pay-on-stripe-not-delivered'){
-    //         $data = $repo->findBy(['isCompleted'=>null,'payOnDelivery'=>0,'isPaymentCompleted'=>1],['id'=>'DESC']);
-    //     }else if($type == 'pay-on-stripe-is-delivered'){
-    //         $data = $repo->findBy(['isCompleted'=>1,'payOnDelivery'=>0,'isPaymentCompleted'=>1],['id'=>'DESC']);
-    //     }else if($type == 'no_delivery'){
-    //         $data = $repo->findBy(['isCompleted'=>null,'payOnDelivery'=>0,'isPaymentCompleted'=>0],['id'=>'DESC']);
-    //     }
+        if($type == 'is-completed'){
+                $data = $repo->findBy(['isCompleted'=>1],['id'=>'DESC']);
+            }else if($type == 'pay-on-stripe-not-delivered'){
+                $data = $repo->findBy(['isCompleted'=>null,'payOnDelivery'=>0,'isPaymentCompleted'=>1],['id'=>'DESC']);
+            }else if($type == 'pay-on-stripe-is-delivered'){
+                $data = $repo->findBy(['isCompleted'=>1,'payOnDelivery'=>0,'isPaymentCompleted'=>1],['id'=>'DESC']);
+            }else if($type == 'no_delivery'){
+                $data = $repo->findBy(['isCompleted'=>null,'payOnDelivery'=>0,'isPaymentCompleted'=>0],['id'=>'DESC']);
+            }
 
         $orders = $paginator->paginate(
             $data,
-            $request->query->getInt('page', 1),//met en place la pagination
+            $request->query->getInt('page', 1), //met en place la pagination
             6 //limite de 6 commandes par pages
         );
 
@@ -127,18 +140,18 @@ final class OrderController extends AbstractController
         ]);
     }
 
-     #[Route('/editor/order/{id}/is-completed/update', name: 'app_orders_is-completed-update')]
-    public function isCompletedUpdate(Request $request, $id, OrderRepository $orderRepository, EntityManagerInterface $entityManager):Response
+    #[Route('/editor/order/{id}/is-completed/update', name: 'app_orders_is-completed-update')]
+    public function isCompletedUpdate(Request $request, $id, OrderRepository $orderRepository, EntityManagerInterface $entityManager): Response
     {
         $order = $orderRepository->find($id);
         $order->setIsCompleted(true);
         $entityManager->flush();
         $this->addFlash('success', 'Modification effectuée');
-        return $this->redirect($request->headers->get('referer'));//cela fait reference a la route precedent cette route ci
+        return $this->redirect($request->headers->get('referer')); //cela fait reference a la route precedent cette route ci
     }
 
     #[Route('/editor/order/{id}/remove', name: 'app_orders_remove')]
-    public function removeOrder(Order $order, EntityManagerInterface $entityManager):Response 
+    public function removeOrder(Order $order, EntityManagerInterface $entityManager): Response
     {
         $entityManager->remove($order);
         $entityManager->flush();
@@ -153,9 +166,9 @@ final class OrderController extends AbstractController
 
         return new Response(json_encode(['status' => 200, "message" => 'on', 'content' => $cityShippingPrice]));
     }
+}
 
     
-}
     
 
 //     #[Route('/{id}', name: 'app_order_show', methods: ['GET'])]

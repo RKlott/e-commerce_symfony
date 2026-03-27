@@ -23,6 +23,7 @@ final class HomePageController extends AbstractController
             $request->query->getInt('page', 1),
             3
         );
+         
 
         return $this->render('home_page/index.html.twig', [
             'products' => $products,
