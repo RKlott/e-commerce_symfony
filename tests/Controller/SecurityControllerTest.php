@@ -40,7 +40,7 @@ class SecurityControllerTest extends WebTestCase
         $this->assertSelectorExists('input[name="_password"]');
         // 7. Vérifie qu'il y a un élément h1 (titre principal) 
         //sur la page qui contient le texte "Connexion"
-        $this->assertSelectorTextContains('h1', 'Please sign in');
+        $this->assertSelectorTextContains('h1', 'Please sign in'); 
     }
 
     public function testLoginRedirectsIfAlreadyAuthenticated(): void
