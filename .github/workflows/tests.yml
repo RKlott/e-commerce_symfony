@@ -33,7 +33,12 @@ jobs:
       run: |
         echo "APP_ENV=test" >> .env
         echo "APP_SECRET=testsecretkey123456789abcdef01234" >> .env
+        echo "APP_SHARE_DIR=var/share" >> .env
+        echo "DEFAULT_URI=http://localhost" >> .env
         echo "DATABASE_URL=sqlite:///%kernel.project_dir%/var/test.db" >> .env
+        echo "MESSENGER_TRANSPORT_DSN=doctrine://default?auto_setup=0" >> .env
+        echo "MAILER_DSN=null://null" >> .env
+        echo "STRIPE_SECRET_KEY=sk_test_fake_key_for_ci" >> .env
 
     # 4. Mise en cache des dépendances Composer
     - name: Cache Composer
@@ -48,4 +53,4 @@ jobs:
 
     # 6. Exécution des tests unitaires et fonctionnels
     - name: Run PHPUnit tests
-      run: php bin/phpunit --colors=always --coverage-tex
+      run: php bin/phpunit --colors=always --coverage-text
