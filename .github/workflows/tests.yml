@@ -1,19 +1,15 @@
 #Test CI/CD
-# Le nom qui s'affichera dans l'interface GitHub Actions
 name: Tests Symfony E-commerce
-# ------------------------------------------------------------------
-# DÉCLENCHEURS (TRIGGERS)
-# Définit quand ce workflow doit s'exécuter
-# ------------------------------------------------------------------
+
 on: 
   push:
-    branches: [ master, main, develop ]  # Se lance à chaque push sur les branches principales
+    branches: [ master, main, develop ]
   pull_request:
-    branches: [ master, main ]  # Se lance quand une PR est ouverte vers 'main'
+    branches: [ master, main ]
 
 jobs:
   tests:
-    runs-on: ubuntu-latest  # Utilise une machine virtuelle Linux
+    runs-on: ubuntu-latest
 
     steps:
     # 1. Récupération du code source
@@ -28,7 +24,6 @@ jobs:
         extensions: sqlite3
 
     # 3. Création du fichier .env minimal pour les tests
-    # Nécessaire car le .env est dans le .gitignore
     - name: Create .env file
       run: |
         echo "APP_ENV=test" >> .env
@@ -51,6 +46,14 @@ jobs:
     - name: Install dependencies
       run: composer install --prefer-dist --no-progress
 
-    # 6. Exécution des tests unitaires et fonctionnels
+    # 6. Création du schéma de base de données SQLite
+    - name: Create database schema
+      env:
+        DATABASE_URL: "sqlite:///%kernel.project_dir%/var/test.db"
+      run: php bin/console doctrine:schema:create --env=test
+
+    # 7. Exécution des tests
     - name: Run PHPUnit tests
+      env:
+        DATABASE_URL: "sqlite:///%kernel.project_dir%/var/test.db"
       run: php bin/phpunit --colors=always --coverage-text
