@@ -20,6 +20,11 @@ class CategoryExtension extends AbstractExtension
 
     public function getCategories(): array
     {
+        try {
         return $this->categoryRepository->findAll();
+        } catch (\Exception $e) {
+        return [];
+    }
+        
     }
 }
